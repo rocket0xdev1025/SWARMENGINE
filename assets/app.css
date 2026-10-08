@@ -694,8 +694,6 @@ kbd { font-family: var(--mono); font-size: 10px; border: 1px solid #333; padding
 .navbtn.ca span { color: #8c8c8c; } .navbtn.ca b { font-weight: 500; letter-spacing: .02em; }
 .navbtn.xbtn { text-decoration: none; color: #fff; } .navbtn.xbtn:hover { text-decoration: none; }
 .projfoot svg { width: 11px; height: 11px; vertical-align: -1px; }
-.projfoot .cafull { background: none; border: 0; padding: 0; color: var(--sky); cursor: pointer; font-size: inherit; word-break: break-all; }
-.projfoot .cafull:hover { color: #fff; }
 @media (max-width: 900px) { .navbtn.ca b, .navbtn.xbtn span { display: none; } }
 
 /* ---- molt (changelog) ---- */

@@ -82,12 +82,10 @@ function copyCA(ca) {
   function fallback() { const i = document.createElement('textarea'); i.value = ca; document.body.appendChild(i); i.select(); try { document.execCommand('copy'); done(); } catch (e) {} i.remove(); }
 }
 function projectInfo(p) {
-  if (!p || (!p.ca && !p.x)) return;
-  const nav = $('#proj'), foot = $('#projfoot');
-  const ca = p.ca ? `<button class="navbtn ca" data-ca="${esc(p.ca)}" title="${esc(t('ca_copy'))}: ${esc(p.ca)}"><span>CA</span><b>${esc(short(p.ca))}</b>${COPYICON}</button>` : '';
-  const x = p.x ? `<a class="navbtn xbtn" href="${esc(p.x)}" target="_blank" rel="noopener noreferrer" title="@${esc(p.x_handle)} on X">${XICON}<span>@${esc(p.x_handle)}</span></a>` : '';
-  nav.innerHTML = ca + x; nav.hidden = false;
-  foot.innerHTML = (p.ca ? ` · <span class="mono">CA</span> <button class="cafull mono" data-ca="${esc(p.ca)}" title="${esc(t('ca_copy'))}">${esc(p.ca)} ${COPYICON}</button>` : '') + (p.x ? ` · <a href="${esc(p.x)}" target="_blank" rel="noopener noreferrer">${XICON} @${esc(p.x_handle)}</a>` : '');
+  if (!p || !p.ca) return;
+  const nav = $('#proj');
+  nav.innerHTML = `<button class="navbtn ca" data-ca="${esc(p.ca)}" title="${esc(t('ca_copy'))}: ${esc(p.ca)}"><span>CA</span><b>${esc(short(p.ca))}</b>${COPYICON}</button>`;
+  nav.hidden = false;
   document.querySelectorAll('[data-ca]').forEach(b => b.addEventListener('click', () => copyCA(b.dataset.ca)));
 }
 function toast(m) { let e = $('.toast'); if (!e) { e = document.createElement('div'); e.className = 'toast'; document.body.appendChild(e); } e.textContent = m; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 1600); }
