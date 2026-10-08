@@ -1,0 +1,112 @@
+/* launch radar: monochrome PPI scope (radar-scope.js) */
+.rs { position: relative; height: 600px; border: 1px solid #222; border-radius: 4px; overflow: hidden; background: #000; isolation: isolate; font-family: var(--mono); color: #d6d6d6;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.03), 0 0 70px rgba(255,255,255,.04) inset; }
+.rs.big { height: min(80vh, 760px); min-height: 600px; }
+.rs-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.rs-scan { position: absolute; inset: 0; pointer-events: none; z-index: 1; background: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px); }
+.rs-scan::before { content: ""; position: absolute; left: 0; right: 0; height: 120px; top: -120px; background: linear-gradient(180deg, transparent, rgba(255,255,255,.045), transparent); animation: rsRoll 6s linear infinite; }
+.rs-scan::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.7) 100%); }
+.rs-noise { position: absolute; inset: -50%; z-index: 1; pointer-events: none; opacity: .06; animation: rsGrain .5s steps(4) infinite;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.rs-cn { position: absolute; width: 18px; height: 18px; border: 1px solid #fff; opacity: .7; z-index: 2; pointer-events: none; }
+.rs-cn.tl { top: 8px; left: 8px; border-right: 0; border-bottom: 0; } .rs-cn.tr { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
+.rs-cn.bl { bottom: 30px; left: 8px; border-right: 0; border-top: 0; } .rs-cn.br { bottom: 30px; right: 8px; border-left: 0; border-top: 0; }
+.rs-top { position: absolute; top: 16px; left: 24px; right: 24px; display: flex; justify-content: space-between; gap: 14px; z-index: 3; pointer-events: none; }
+.rs-title { display: flex; flex-direction: column; gap: 4px; }
+.rs-title b { font-family: var(--display); font-size: 20px; letter-spacing: .12em; color: #fff; text-shadow: 0 0 18px rgba(255,255,255,.45); }
+.rs-title span { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #6a6a6a; }
+.rs-title i { font-style: normal; color: #fff; }
+.rs-title i.live::before { content: "● "; animation: rsBlink 1s steps(2) infinite; }
+.rs-stats { display: flex; gap: 22px; }
+.rs-stats div { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; padding-left: 12px; border-left: 1px solid #262626; }
+.rs-stats span { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: #6a6a6a; }
+.rs-stats b { font-size: 18px; font-weight: 500; color: #fff; font-variant-numeric: tabular-nums; }
+.rs-stats b.rs-hi { background: #fff; color: #000; padding: 0 5px; text-shadow: none; box-shadow: 0 0 14px rgba(255,255,255,.4); }
+
+/* panels */
+.rs-panel { position: relative; border: 1px solid rgba(255,255,255,.16); background: linear-gradient(180deg, rgba(18,18,18,.82), rgba(0,0,0,.65)); display: flex; flex-direction: column; min-height: 0; }
+.rs-panel::before { content: ""; position: absolute; top: -1px; left: -1px; width: 36px; height: 2px; background: #fff; box-shadow: 0 0 8px #fff; }
+.rs-panel::after { content: ""; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-right: 1px solid #fff; border-bottom: 1px solid #fff; }
+.rs-ph { display: flex; justify-content: space-between; padding: 8px 11px; font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: #fff; border-bottom: 1px solid rgba(255,255,255,.14); white-space: nowrap; gap: 8px; }
+.rs-ph i { font-style: normal; color: #6a6a6a; font-variant-numeric: tabular-nums; }
+.rs-right { position: absolute; top: 84px; right: 24px; bottom: 66px; width: 30%; max-width: 340px; z-index: 3; display: flex; flex-direction: column; gap: 10px; }
+.rs-log { flex: 1; }
+.rs-log-l { flex: 1; overflow: hidden; }
+.rs-sig { flex: 0 0 170px; }
+.rs-osc { display: block; width: 100%; height: 86px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.rs-spec { display: block; width: 100%; flex: 1; min-height: 40px; }
+.rs-hexcol { position: absolute; top: 84px; left: 24px; bottom: 66px; width: 156px; z-index: 3; display: flex; flex-direction: column; gap: 10px; }
+.rs-hex { flex: 1; overflow: hidden; }
+.rs-hex pre { margin: 0; padding: 6px 10px; font-size: 9.5px; line-height: 1.55; color: #5a5a5a; overflow: hidden; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; white-space: pre; }
+.rs-hex pre span { display: block; overflow: hidden; text-overflow: ellipsis; }
+.rs-hex pre span.ec { color: #cfcfcf; } .rs-hex pre span.lk { color: #fff; }
+.rs-hex pre span.hi { background: #fff; color: #000; }
+.rs-meters { flex: 0 0 132px; }
+.rs-mt { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 8px 10px; }
+.rs-mt div { position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 2px, transparent 2px 5px); }
+.rs-mt u { display: block; width: 100%; background: repeating-linear-gradient(0deg, #fff 0 3px, transparent 3px 5px); transition: height .12s linear; box-shadow: 0 0 6px rgba(255,255,255,.4); }
+.rs-mt span { position: absolute; bottom: -2px; transform: translateY(100%); font-size: 8px; color: #6a6a6a; letter-spacing: .08em; text-transform: uppercase; }
+.rs-mt { padding-bottom: 20px; }
+
+/* contact log rows */
+.rs-row { display: grid; grid-template-columns: 34px 40px 1fr auto; gap: 8px; align-items: center; padding: 5px 11px; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; color: #bdbdbd; animation: rsIn .45s both; position: relative; }
+.rs-row:hover { background: rgba(255,255,255,.07); }
+.rs-row.tgt { background: rgba(255,255,255,.1); }
+.rs-row.tgt::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #fff; box-shadow: 0 0 8px #fff; }
+.rs-row.idle { cursor: default; }
+.rs-row i { font-style: normal; color: #5a5a5a; font-size: 10px; }
+.rs-row span { color: #7a7a7a; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-row b { color: #fff; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-row em { font-style: normal; font-size: 9px; letter-spacing: .08em; padding: 1px 6px; border: 1px solid #555; color: #9a9a9a; white-space: nowrap; }
+.rs-row.b-DANGER em { background: #fff; border-color: #fff; color: #000; font-weight: 700; }
+.rs-row.b-RISKY em { border-color: #e0e0e0; color: #e0e0e0; }
+.rs-row.b-OK em { border-color: #19e3c4; color: #19e3c4; text-shadow: 0 0 6px rgba(25,227,196,.5); }
+.rs-row.b-CLEAN em { border-color: #2f7dff; color: #5b9bff; text-shadow: 0 0 6px rgba(47,125,255,.5); }
+.rs-row.b-TOO_EARLY em { border-style: dashed; }
+.rs-row.b-scanning em { border-color: #fff; color: #fff; animation: rsBlink 1s steps(2) infinite; }
+.rs-row.b-error em { color: #555; border-color: #333; text-decoration: line-through; }
+
+/* lock-on callout */
+.rs-lock { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; min-width: 210px; max-width: 290px; padding: 10px 14px 11px; border: 1px solid #fff; background: rgba(0,0,0,.88);
+  box-shadow: 0 0 26px rgba(255,255,255,.12), inset 0 0 18px rgba(255,255,255,.05); opacity: 0; transition: opacity .3s;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); }
+.rs-lock::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px); }
+.rs-lock.on { opacity: 1; }
+.rs-lock.danger { animation: rsStrobe .9s steps(2) infinite; }
+.rs-lock em { display: block; font-style: normal; font-size: 9px; letter-spacing: .16em; color: #9a9a9a; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-lock > b { display: block; font-family: var(--display); font-size: 26px; line-height: 1.15; color: #fff; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-lock > span { display: block; font-size: 10px; color: #8a8a8a; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-lrow { display: flex; gap: 12px; margin-top: 7px; font-size: 9.5px; color: #6a6a6a; text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
+.rs-lrow b { font-size: 11px; color: #fff; font-weight: 500; }
+.rs-lock > i { display: inline-block; margin-top: 8px; font-style: normal; font-size: 10.5px; letter-spacing: .12em; padding: 2px 8px; background: var(--vc, #fff); color: #000; font-weight: 700; }
+
+.rs-empty { position: absolute; z-index: 3; pointer-events: none; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 10.5px; letter-spacing: .2em; color: #fff; text-align: center; white-space: nowrap; animation: rsBlink 1.6s ease-in-out infinite; text-shadow: 0 0 10px rgba(255,255,255,.6); }
+.rs-bot { position: absolute; left: 24px; right: 24px; bottom: 34px; z-index: 3; display: flex; gap: 20px; align-items: center; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #6a6a6a; pointer-events: none; }
+.rs-bot b { color: #fff; font-weight: 500; font-variant-numeric: tabular-nums; }
+.rs-legend { margin-left: auto; display: flex; gap: 5px; align-items: center; }
+.rs-legend i { display: inline-flex; width: 9px; height: 9px; margin-left: 10px; } .rs-legend svg { width: 100%; height: 100%; }
+.rs-tick { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; z-index: 3; overflow: hidden; border-top: 1px solid rgba(255,255,255,.14); background: rgba(10,10,10,.9); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+.rs-tick::before { content: "FEED"; position: absolute; left: 0; top: 0; bottom: 0; z-index: 1; display: flex; align-items: center; padding: 0 10px; background: #fff; color: #000; font-weight: 700; }
+.rs-tick-in { display: inline-flex; align-items: center; height: 100%; white-space: nowrap; padding-left: 60px; animation: rsMarq 40s linear infinite; color: #9a9a9a; }
+.rs-tick-in span.hi { color: #000; background: #fff; padding: 0 4px; }
+.rs-tick-in em { font-style: normal; color: #444; margin: 0 14px; }
+.rs-tip { position: absolute; z-index: 5; display: none; pointer-events: none; max-width: 260px; padding: 8px 10px; font-size: 12px; line-height: 1.45; background: rgba(0,0,0,.94); border: 1px solid rgba(255,255,255,.5); border-radius: 2px; color: #eee; }
+.rs-tip .b { background: #fff; color: #000; padding: 0 5px; font-size: 10.5px; font-weight: 700; } .rs-tip .dim { color: #7a7a7a; }
+@keyframes rsBlink { 50% { opacity: .35; } }
+@keyframes rsIn { from { opacity: 0; transform: translateX(12px); } }
+@keyframes rsMarq { to { transform: translateX(-50%); } }
+@keyframes rsRoll { to { top: 100%; } }
+@keyframes rsGrain { 0% { transform: translate(0, 0); } 25% { transform: translate(-5%, 3%); } 50% { transform: translate(4%, -4%); } 75% { transform: translate(-3%, -2%); } }
+@keyframes rsStrobe { 50% { border-color: #555; box-shadow: 0 0 40px rgba(255,255,255,.35), inset 0 0 18px rgba(255,255,255,.1); } }
+@media (max-width: 1099px) { .rs-hexcol { display: none; } }
+@media (max-width: 859px) { .rs-right { display: none; } .rs-legend { display: none; } }
+@media (max-width: 640px) {
+  .rs, .rs.big { height: 560px; min-height: 0; }
+  .rs-top { flex-direction: column; top: 12px; left: 16px; right: 16px; gap: 8px; }
+  .rs-stats { gap: 10px; } .rs-stats div { align-items: flex-start; padding-left: 8px; } .rs-stats b { font-size: 14px; }
+  .rs-title b { font-size: 16px; }
+  .rs-bot { left: 16px; right: 16px; gap: 12px; } .rs-hz { display: none; }
+  .rs-lock { min-width: 0; max-width: calc(100% - 28px); padding: 8px 12px; } .rs-lock > b { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .rs-noise, .rs-scan::before, .rs-tick-in { animation: none; } }
