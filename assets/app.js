@@ -161,9 +161,9 @@ async function home() {
   stages.push(SwarmEngine($('#engroot'), { search: searchBox() }));
   applyI18n(); bindSearch();
   const scope = mountScope($('#scope'), '#rad'), deck = radarDeck($('#rad'), 8);
-  const loadRadar = () => document.hidden ? 0 : api('/api/radar').then(d => { if (!$('#rad')) return; const f = d.feed || []; scope.update(f, d.enabled); deck(f, d.enabled); }).catch(() => {});
+  const loadRadar = () => document.hidden ? 0 : api('https://app-server-sandy.vercel.app/api/radar').then(d => { if (!$('#rad')) return; const f = d.feed || []; scope.update(f, d.enabled); deck(f, d.enabled); }).catch(() => {});
   loadRadar(); timers.push(setInterval(loadRadar, 6000));
-  api('/api/recent?limit=12&source=user').then(d => { $('#recent').innerHTML = (d.scans || []).map(scanCard).join('') || '<div class="empty">—</div>'; }).catch(() => {});
+  api('https://app-server-sandy.vercel.app/api/recent?limit=12&source=user').then(d => { $('#recent').innerHTML = (d.scans || []).map(scanCard).join('') || '<div class="empty">—</div>'; }).catch(() => {});
 }
 function scanCard(s) {
   return `<a class="rc" href="/t/${esc(s.chain)}/${esc(s.token)}"><span class="bar" style="background:${BANDC[s.band] || '#333'}"></span>
@@ -335,7 +335,7 @@ function mcpBox() {
   return `<section class="section"><div class="card mcp"><div class="row"><span class="chip mint">MCP</span><h2>${esc(t('mcp_t'))}</h2></div>
     <p class="muted" style="margin:8px 0 10px">${esc(t('mcp_sub'))}</p>
     <pre class="code">{ "mcpServers": { "swarm": { "type": "http", "url": "${esc(url)}" } } }</pre>
-    <div class="dim mono" style="font-size:12px">tools: swarm_scan · swarm_radar · swarm_wallet · swarm_cabals · feed: <a href="/api/agent/feed" target="_blank">/api/agent/feed</a></div></div></section>`;
+    <div class="dim mono" style="font-size:12px">tools: swarm_scan · swarm_radar · swarm_wallet · swarm_cabals · feed: <a href="https://app-server-sandy.vercel.app/api/agent/feed" target="_blank">/api/agent/feed</a></div></div></section>`;
 }
 
 // shared page header: same grammar as the decision engine header
@@ -807,7 +807,7 @@ function radarView() {
   const scope = mountScope($('#scope'), '#rad'), deck = radarDeck($('#rad'), 60);
   $('#rf').innerHTML = ['', ...CHAINS.map(c => c.id)].map(c => `<button class="btn ghost sm${c ? '' : ' on'}" data-f="${c}">${c || 'all'}</button>`).join('');
   $('#rf').querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { filter = b.dataset.f; $('#rf').querySelectorAll('[data-f]').forEach(x => x.classList.toggle('on', x === b)); load(); }));
-  const load = () => document.hidden ? 0 : api('/api/radar').then(d => {
+  const load = () => document.hidden ? 0 : api('https://app-server-sandy.vercel.app/api/radar').then(d => {
     const feed = (d.feed || []).filter(x => !filter || x.chain === filter);
     scope.update(feed, d.enabled); deck(feed, d.enabled);
     const all = d.feed || []; [['#k_tr', all.length], ['#k_sc', all.filter(x => x.band).length], ['#k_dg', all.filter(x => x.band === 'DANGER').length]].forEach(([k, v]) => countTo($(k), v));
@@ -817,7 +817,7 @@ function radarView() {
 async function cabalsView() {
   $('#view').innerHTML = `${pageHead({ title: t('cab_head').toUpperCase(), sub: esc(t('cab_lead')), kpis: [['crews', '<span id="k_cr">0</span>'], ['wallets', '<span id="k_cw">0</span>'], ['danger', '<span id="k_cd">0</span>']], crumbs: ['SCANS', 'SWARMS', 'MEMORY', 'REPEAT', 'CABAL'], on: 4 })}<div class="card" id="cab"><div class="empty">…</div></div>`;
   try {
-    const d = await api('/api/cabals');
+    const d = await api('https://app-server-sandy.vercel.app/api/cabals');
     const cb = d.cabals || []; countTo($('#k_cr'), cb.length); countTo($('#k_cw'), cb.reduce((a, c) => a + c.wallets.length, 0)); countTo($('#k_cd'), cb.reduce((a, c) => a + (c.danger || 0), 0));
     $('#cab').innerHTML = (d.cabals || []).map((c, i) => `<div class="crew"><div class="row"><span class="dot" style="background:${SW[i % SW.length]}"></span><b class="mono">crew #${i + 1}</b><span class="chip">${c.wallets.length} ${esc(t('wallets_'))}</span><span class="chip honey">${c.tokens.length} ${esc(t('tokens'))}</span>${c.danger ? `<span class="chip rose">${c.danger} DANGER</span>` : ''}</div>
       <div class="mono" style="font-size:12px;margin-top:6px">${c.tokens.map(x => `<a href="/t/${esc(x.chain)}/${esc(x.token)}">${esc(x.symbol || short(x.token))}</a> <span class="band ${esc(x.band)}" style="font-size:10px;padding:1px 6px">${esc(bandLabel(x.band))}</span>`).join(' &nbsp; ')}</div>
@@ -988,9 +988,9 @@ function docsView() {
     <code>X-Holder-Pass: &lt;pass&gt;</code><span>optional header: Holder Pass gets higher scan limits and priority (see the HOLDER PASS button)</span>
     <code>GET /badge/&lt;chain&gt;/&lt;token&gt;.svg</code><span>live "Scanned by SWARM" badge · ?style=flat for READMEs</span>
     <code>GET /api/wallet/&lt;address&gt;?chain=</code><span>swarm memory + live X-ray (EVM)</span>
-    <code>GET /api/radar</code><span>launch radar feed</span>
+    <code>GET https://app-server-sandy.vercel.app/api/radar</code><span>launch radar feed</span>
     <code>GET /api/cabals</code><span>crews seen as one swarm in ≥ 2 tokens</span>
-    <code>GET /api/recent · /api/stats · /api/chains</code><span>lists and totals</span>
+    <code>GET /api/recent · https://app-server-sandy.vercel.app/api/stats · https://app-server-sandy.vercel.app/api/chains</code><span>lists and totals</span>
   </div></div>
   ${mcpBox()}
   <div class="section card"><h2 style="margin-bottom:10px">how the verdict works</h2>
@@ -1068,7 +1068,7 @@ const cmd = (() => {
   }
   function open(prefill = '') {
     box.hidden = false; q.value = prefill; sel = 0; paint(); requestAnimationFrame(() => { box.classList.add('on'); q.focus(); });
-    if (!recent) api('/api/recent?limit=40').then(d => { recent = d.scans || []; if (!box.hidden) paint(); }).catch(() => { recent = []; });
+    if (!recent) api('https://app-server-sandy.vercel.app/api/recent?limit=40').then(d => { recent = d.scans || []; if (!box.hidden) paint(); }).catch(() => { recent = []; });
   }
   function close() { box.classList.remove('on'); box.hidden = true; }
   function run(i) { const it = items[i]; if (!it) return; close(); it.run(); }
@@ -1093,7 +1093,7 @@ const cmd = (() => {
 watchBadge();
 
 // ---------------------------------------------------------------- boot
-api('/api/chains').then(d => { CHAINS = d.chains || []; projectInfo(d.project); }).catch(() => {}).finally(() => { applyI18n(); render(); });
-api('/api/holder/config').then(d => { HOLDER = d; holderButton(); const ps = passGet(); if (ps && ps.pass) api('/api/holder/me').then(m => { if (!m.holder) { passSet(null); holderButton(); } }).catch(() => {}); }).catch(() => {});
+api('https://app-server-sandy.vercel.app/api/chains').then(d => { CHAINS = d.chains || []; projectInfo(d.project); }).catch(() => {}).finally(() => { applyI18n(); render(); });
+api('https://app-server-sandy.vercel.app/api/holder/config').then(d => { HOLDER = d; holderButton(); const ps = passGet(); if (ps && ps.pass) api('/api/holder/me').then(m => { if (!m.holder) { passSet(null); holderButton(); } }).catch(() => {}); }).catch(() => {});
 $('#holderbtn')?.addEventListener('click', holderPanel);
 })();

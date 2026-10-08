@@ -332,14 +332,14 @@ window.SwarmEngine = function (root, opts = {}) {
 
   async function load() {
     const get = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
-    const [f, s, rc, cb] = await Promise.all([get('/api/agent/feed?limit=40'), get('/api/stats'), get('/api/recent?limit=200'), get('/api/cabals')]);
+    const [f, s, rc, cb] = await Promise.all([get('https://app-server-sandy.vercel.app/api/agent/feed?limit=40'), get('https://app-server-sandy.vercel.app/api/stats'), get('https://app-server-sandy.vercel.app/api/recent?limit=200'), get('https://app-server-sandy.vercel.app/api/cabals')]);
     if (!alive) return;
     stats = s || {}; recent = (rc && rc.scans) || []; cabals = ((cb && cb.cabals) || []).length;
     const fresh = (f && f.items) || [];
     if (fresh.length) { items = fresh; demo = false; } else if (!items.length) { items = demoItems(); demo = true; }
     setK('foot', demo ? 'demo replay · no scans on this server yet: paste a token to start' : 'replay · real scans from this server, animated');
     setK('mode', demo ? 'demo replay' : 'replay · real scans');
-    panels();
+    panels(); 
   }
 
   function panels() {

@@ -53,7 +53,7 @@ window.SpiderCam = function (cv, logEl, opt = {}) {
   const key = it => it.chain + ':' + it.token + ':' + (it.scanned_at || '');
   async function fetchFeed() {
     try {
-      const r = await fetch('/api/agent/feed?limit=20'); if (!r.ok) return;
+      const r = await fetch('https://app-server-sandy.vercel.app/api/agent/feed?limit=20'); if (!r.ok) return;
       const d = await r.json(); let items = (d.items || []).filter(it => !seen.has(key(it)));
       if (!primed) items = items.slice(0, 8);                                   // first look: replay the last few
       primed = true;
