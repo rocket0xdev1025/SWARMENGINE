@@ -222,7 +222,7 @@ async function startScan(ca, chain, fresh) {
   $('#err') && ($('#err').textContent = '');
   const btn = $('#go'); if (btn) { btn.disabled = true; btn.textContent = t('scanning'); }
   try {
-    const d = await api('/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: ca, chain, fresh: !!fresh }) });
+    const d = await api('https://app-server-sandy.vercel.app/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: ca, chain, fresh: !!fresh }) });
     const ev = await api('/api/events?job=' + d.job + '&after=0');
     history.pushState(null, '', `/t/${ev.chain}/${ev.token}`);
     crawlView(d.job, ev.chain, ev.token);
@@ -1037,7 +1037,7 @@ async function watchTick() {               // one token per tick: read the store
       if (it) { it.snap = now; it.ts = r.scanned_at; if (diff.length) { it.changed = diff.join(' · '); } watchSave(L); }
       if (diff.length) alertUser(w, diff.join(' · '));
     } else if (Date.now() / 1000 - r.scanned_at > 15 * 60) {
-      api('/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: w.token, chain: w.chain, fresh: true }) }).catch(() => {});
+      api('https://app-server-sandy.vercel.app/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: w.token, chain: w.chain, fresh: true }) }).catch(() => {});
     }
   } catch (e) {}
 }
