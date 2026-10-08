@@ -61,7 +61,7 @@ window.SwarmEngine = function (root, opts = {}) {
   root.innerHTML = `
   <div class="eng-top">
     <div class="eng-title"><h1>SWARM DECISION ENGINE <em>// 24/7</em></h1>
-      <p>a token desk that never sleeps <i>·</i> the judge decides every launch <i>·</i> <span class="tba-wrap">the LLM only reads the unsure<span class="tba">TBA</span></span></p></div>
+      <p>a token desk that never sleeps <i>·</i> the judge decides every launch <i>·</i> <span class="tba-wrap">the LLM only reads the unsure<span class="tba">0x7eebda046d451bc7a7d12491eff72a861aa8136e</span></span></p></div>
     <div class="eng-kpis">
       <div><span>clock</span><b data-k="clock">--:--</b></div>
       <div><span>decisions</span><b data-k="dec">0</b></div>
