@@ -60,9 +60,13 @@ const icon = l => `<span class="ico ${l}">${({ ok: '✓', info: 'i', warn: '!', 
 const PASS_KEY = 'swarm_holder_pass';
 const passGet = () => { try { return JSON.parse(localStorage.getItem(PASS_KEY) || 'null'); } catch (e) { return null; } };
 const passSet = v => { try { v ? localStorage.setItem(PASS_KEY, JSON.stringify(v)) : localStorage.removeItem(PASS_KEY); } catch (e) {} };
+// Static preview (Live Server) answers POST /api/scan with 405. Relative API calls go to the engine that accepts them.
+const API_ORIGIN = 'https://swarmengine.tech';
 async function api(p, o) {
   const ps = passGet();
-  if (ps && ps.pass && ps.exp * 1000 > Date.now() && p.startsWith('/api/')) o = { ...(o || {}), headers: { ...((o || {}).headers || {}), 'X-Holder-Pass': ps.pass } };
+  const rel = p.startsWith('/api/');
+  if (ps && ps.pass && ps.exp * 1000 > Date.now() && rel) o = { ...(o || {}), headers: { ...((o || {}).headers || {}), 'X-Holder-Pass': ps.pass } };
+  if (rel) p = API_ORIGIN + p;
   const r = await fetch(p, o); let d = null;
   try { d = await r.json(); } catch (e) {}
   if (!r.ok) throw new Error((d && d.error) || 'HTTP ' + r.status);
@@ -222,7 +226,7 @@ async function startScan(ca, chain, fresh) {
   $('#err') && ($('#err').textContent = '');
   const btn = $('#go'); if (btn) { btn.disabled = true; btn.textContent = t('scanning'); }
   try {
-    const d = await api('https://app-server-sandy.vercel.app/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: ca, chain, fresh: !!fresh }) });
+    const d = await api('/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: ca, chain, fresh: !!fresh }) });
     const ev = await api('/api/events?job=' + d.job + '&after=0');
     history.pushState(null, '', `/t/${ev.chain}/${ev.token}`);
     crawlView(d.job, ev.chain, ev.token);
@@ -1037,7 +1041,7 @@ async function watchTick() {               // one token per tick: read the store
       if (it) { it.snap = now; it.ts = r.scanned_at; if (diff.length) { it.changed = diff.join(' · '); } watchSave(L); }
       if (diff.length) alertUser(w, diff.join(' · '));
     } else if (Date.now() / 1000 - r.scanned_at > 15 * 60) {
-      api('https://app-server-sandy.vercel.app/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: w.token, chain: w.chain, fresh: true }) }).catch(() => {});
+      api('/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: w.token, chain: w.chain, fresh: true }) }).catch(() => {});
     }
   } catch (e) {}
 }
