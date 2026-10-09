@@ -71,20 +71,6 @@ async function api(p, o) {
 }
 // ---------------------------------------------------------------- project CA + X (PROJECT_CA / PROJECT_X in env)
 const XICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>';
-const COPYICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M9 9h11v11H9zM5 15H4V4h11v1"/></svg>';
-function copyCA(ca) {
-  const done = () => toast(t('ca_copied'));
-  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(ca).then(done, () => fallback());
-  else fallback();
-  function fallback() { const i = document.createElement('textarea'); i.value = ca; document.body.appendChild(i); i.select(); try { document.execCommand('copy'); done(); } catch (e) {} i.remove(); }
-}
-function projectInfo(p) {
-  if (!p || !p.ca) return;
-  const nav = $('#proj');
-  nav.innerHTML = `<button class="navbtn ca" data-ca="${esc(p.ca)}" title="${esc(t('ca_copy'))}: ${esc(p.ca)}"><span>CA</span><b>${esc(short(p.ca))}</b>${COPYICON}</button>`;
-  nav.hidden = false;
-  document.querySelectorAll('[data-ca]').forEach(b => b.addEventListener('click', () => copyCA(b.dataset.ca)));
-}
 function toast(m) { let e = $('.toast'); if (!e) { e = document.createElement('div'); e.className = 'toast'; document.body.appendChild(e); } e.textContent = m; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 1600); }
 async function copy(s) { try { await navigator.clipboard.writeText(s); toast(t('copied')); } catch (e) { toast(s); } }
 const explorer = (r, a, kind) => !r || !r.explorer ? null : r.chain === 'solana' ? r.explorer + (kind === 'token' ? '/token/' : '/account/') + a : r.explorer + (kind === 'token' ? '/token/' : '/address/') + a;
@@ -1092,7 +1078,7 @@ const cmd = (() => {
 watchBadge();
 
 // ---------------------------------------------------------------- boot
-api('https://app-server-sandy.vercel.app/api/chains').then(d => { CHAINS = d.chains || []; projectInfo(d.project); }).catch(() => {}).finally(() => { applyI18n(); render(); });
+api('https://app-server-sandy.vercel.app/api/chains').then(d => { CHAINS = d.chains || []; }).catch(() => {}).finally(() => { applyI18n(); render(); });
 api('https://app-server-sandy.vercel.app/api/holder/config').then(d => { HOLDER = d; holderButton(); const ps = passGet(); if (ps && ps.pass) api('/api/holder/me').then(m => { if (!m.holder) { passSet(null); holderButton(); } }).catch(() => {}); }).catch(() => {});
 $('#holderbtn')?.addEventListener('click', holderPanel);
 })();
