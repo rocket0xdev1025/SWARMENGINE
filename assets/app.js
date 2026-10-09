@@ -60,14 +60,10 @@ const icon = l => `<span class="ico ${l}">${({ ok: '✓', info: 'i', warn: '!', 
 const PASS_KEY = 'swarm_holder_pass';
 const passGet = () => { try { return JSON.parse(localStorage.getItem(PASS_KEY) || 'null'); } catch (e) { return null; } };
 const passSet = v => { try { v ? localStorage.setItem(PASS_KEY, JSON.stringify(v)) : localStorage.removeItem(PASS_KEY); } catch (e) {} };
-// Static preview (Live Server) answers POST /api/scan with 405. Relative API calls go to the engine that accepts them.
-const API_ORIGIN = 'https://swarmengine.tech';
-const apiUrl = p => p.startsWith('/api/') ? API_ORIGIN + p : p;
+// Stay on this host. swarmengine.tech only sends Access-Control-Allow-Origin for itself, so a cross-origin POST from www.swarmengine.site is blocked.
 async function api(p, o) {
   const ps = passGet();
-  const rel = p.startsWith('/api/');
-  if (ps && ps.pass && ps.exp * 1000 > Date.now() && rel) o = { ...(o || {}), headers: { ...((o || {}).headers || {}), 'X-Holder-Pass': ps.pass } };
-  if (rel) p = apiUrl(p);
+  if (ps && ps.pass && ps.exp * 1000 > Date.now() && p.startsWith('/api/')) o = { ...(o || {}), headers: { ...((o || {}).headers || {}), 'X-Holder-Pass': ps.pass } };
   const r = await fetch(p, o); let d = null;
   try { d = await r.json(); } catch (e) {}
   if (!r.ok) throw new Error((d && d.error) || 'HTTP ' + r.status);
@@ -413,7 +409,7 @@ function resultView(r, hist) {
   <div class="section" id="rpsec" hidden><div class="head"><h2 id="rph">Rug Replay</h2></div><div class="card" id="rp"></div></div>
   <div class="section"><div class="head"><h2>Deployer DNA</h2><span class="chip">beta</span></div><div class="card" id="dna"><div class="empty">reading the creator's past launches…</div></div></div>
   <div class="section"><div class="head"><h2>${esc(t('share'))}</h2></div>
-    <div class="grid g2"><img class="cardprev" id="cardimg" src="${esc(apiUrl(`/api/card/${r.chain}/${r.token}.svg?v=${r.scanned_at}`))}" alt="share card">
+    <div class="grid g2"><img class="cardprev" id="cardimg" src="/api/card/${esc(r.chain)}/${esc(r.token)}.svg?v=${r.scanned_at}" alt="share card">
       <div class="toolbar" style="align-content:start">
         <a class="btn sm" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}&url=${encodeURIComponent(shareUrl)}">𝕏 ${esc(t('share_x'))}</a>
         <button class="btn ghost sm" id="dl">⬇ ${esc(t('dl_card'))}</button>
@@ -545,7 +541,7 @@ function memoryHtml(r) {
 }
 async function downloadCard(r) {
   try {
-    const svg = await (await fetch(apiUrl(`/api/card/${r.chain}/${r.token}.svg`))).text();
+    const svg = await (await fetch(`/api/card/${r.chain}/${r.token}.svg`)).text();
     const img = new Image();
     img.onload = () => {
       const c = document.createElement('canvas'); c.width = 1200; c.height = 630;

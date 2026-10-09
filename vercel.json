@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://swarmengine.tech/api/:path*" },
+    { "source": "/badge/:path*", "destination": "https://swarmengine.tech/badge/:path*" },
+    { "source": "/mcp", "destination": "https://swarmengine.tech/mcp" },
+    { "source": "/mcp/:path*", "destination": "https://swarmengine.tech/mcp/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
